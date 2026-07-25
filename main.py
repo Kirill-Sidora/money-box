@@ -23,3 +23,8 @@ class Goal:
             self.balance -= amount
         except ValueError as error:
             print(error)
+
+    def get_percentage_of_progress(self):
+        result = (self.balance * 100) / self.total_amount
+
+        return result
