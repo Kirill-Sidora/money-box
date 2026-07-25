@@ -12,6 +12,9 @@ class Goal:
                 raise ValueError(f'Баланс не может превышать итоговой суммы цели ({self.balance} + {amount} > {self.total_amount})')
 
             self.balance += amount
+
+            if self.balance == self.total_amount:
+                self.__change_status()
         except ValueError as error:
             print(error)
 
@@ -28,3 +31,6 @@ class Goal:
         result = (self.balance * 100) / self.total_amount
 
         return result
+
+    def __change_status(self):
+        self.status = 'выполнена'
