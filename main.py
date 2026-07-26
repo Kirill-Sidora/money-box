@@ -276,6 +276,30 @@ def find_goal():
                 статус - {goal.get_status()}
             ''')
 
+def print_tottal_progress():
+    categoryes_folder_src = f'{os.getcwd()}/categoryes'
+
+    balance = 0
+    tottal_amount = 0
+
+    
+    for dirpath, dirnames, filenames in os.walk(categoryes_folder_src):
+        if filenames == []:
+            continue
+
+        filename = filenames[0]
+        with open(f'{dirpath}/{filename}', 'r', encoding='utf-8') as goal_file:
+            reader = csv.DictReader(goal_file)
+            for row in reader:
+                balance += int(row.get('balance'))
+
+                tottal_amount += int(row.get('tottal_amount'))
+
+    print(f'''
+    общий баланс - {balance}
+    общая итоговая сумма - {tottal_amount}
+    ''')
+
 def print_commands():
     print('''
     помощь - выводит все доступные команды
@@ -286,7 +310,7 @@ def print_commands():
 
 def money_box():
     print('сообщение>Итоговый проект "Копилка"')
-    commands_list = ['помощь', 'выход', 'создать цель', 'удалить цель', 'найти цель']
+    commands_list = ['помощь', 'выход', 'создать цель', 'удалить цель', 'найти цель', 'общий прогресс']
     current_goal = None
 
     while True:
@@ -300,6 +324,9 @@ def money_box():
                 break
             except ValueError as error:
                 print(error)
+        if command == 'общий прогресс':
+            print_tottal_progress()
+        
         if command == 'удалить цель':
             delete_goal()
         
