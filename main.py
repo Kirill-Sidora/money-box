@@ -4,39 +4,45 @@ import csv
 class Goal:
     def __init__(self, name: str, tottal_amount: int, balance: int, category: str):
         self.name = name
-        self.total_amount = tottal_amount
-        self.balance = balance
+        self.__tottal_amount = tottal_amount
+        self.__balance = balance
         self.category = category
         self.__status = 'не выполнена'
 
     def increase_balance(self, amount: int):
         try:
-            if self.balance + amount > self.total_amount:
-                raise ValueError(f'Баланс не может превышать итоговой суммы цели ({self.balance} + {amount} > {self.total_amount})')
+            if self.__balance + amount > self.__tottal_amount:
+                raise ValueError(f'Баланс не может превышать итоговой суммы цели ({self.__balance} + {amount} > {self.__tottal_amount})')
 
-            self.balance += amount
+            self.__balance += amount
 
-            if self.balance == self.total_amount:
+            if self.__balance == self.__tottal_amount:
                 self.__change_status()
         except ValueError as error:
             print(error)
 
     def decrease_balance(self, amount: int):
         try:
-            if self.balance - amount < 0:
-                raise ValueError(f'Баланс не может быть отрицательным ({self.balance} - {amount} < 0)')
+            if self.__balance - amount < 0:
+                raise ValueError(f'Баланс не может быть отрицательным ({self.__balance} - {amount} < 0)')
 
-            self.balance -= amount
+            self.__balance -= amount
         except ValueError as error:
             print(error)
 
     def get_percentage_of_progress(self):
-        result = (self.balance * 100) / self.total_amount
+        result = (self.__balance * 100) / self.__tottal_amount
 
         return result
 
     def get_status(self):
         return self.__status
+
+    def get_balance(self):
+        return self.__balance
+
+    def get_tottal_amount(self):
+        return self.__tottal_amount
 
     def __change_status(self):
         self.__status = 'выполнена'
@@ -206,7 +212,7 @@ def find_goal():
             return
 
         if command == 'увеличить баланс':
-            current_balance = goal.balance
+            current_balance = goal.get_balance()
 
             while True:
                 try:
@@ -221,19 +227,21 @@ def find_goal():
 
             goal.increase_balance(int(amount))
 
-            if current_balance != goal.balance:
+            if current_balance != goal.get_balance():
                 with open(goal_file_src, 'r', encoding='utf-8') as goal_file:
                     reader = csv.DictReader(goal_file)
                     row = list(reader)[0]
-                    row.update({'balance': goal.balance})
+                    row.update({'balance': goal.get_balance()})
 
                 with open(goal_file_src, 'w', encoding='utf-8', newline='') as goal_file:
                     writer = csv.DictWriter(goal_file, ['name', 'tottal_amount', 'balance', 'category', 'status'])
                     writer.writeheader()
                     writer.writerow(row)
 
+            goal_progress_notification(goal.get_tottal_amount(), goal.get_balance())
+
         if command == 'уменьшить баланс':
-            current_balance = goal.balance
+            current_balance = goal.get_balance()
 
             while True:
                 try:
@@ -248,33 +256,38 @@ def find_goal():
 
             goal.decrease_balance(int(amount))
 
-            if current_balance != goal.balance:
+            if current_balance != goal.get_balance():
                 with open(goal_file_src, 'r', encoding='utf-8') as goal_file:
                     reader = csv.DictReader(goal_file)
                     row = list(reader)[0]
-                    row.update({'balance': goal.balance})
+                    row.update({'balance': goal.get_balance()})
 
                 with open(goal_file_src, 'w', encoding='utf-8', newline='') as goal_file:
                     writer = csv.DictWriter(goal_file, ['name', 'tottal_amount', 'balance', 'category', 'status'])
                     writer.writeheader()
                     writer.writerow(row)
 
-            if current_balance != goal.balance:
-                with open(goal_file_src, 'r', encoding='utf-8') as goal_file:
-                    reader = csv.DictReader(goal_file)
-                    writer = csv.DictWriter(goal_file, ['name', 'tottal_amount', 'balance', 'category', 'status'])
-                    for row in reader:
-                        row.update({'balance': goal.balance})
-                        writer.writerow(row)
+            goal_progress_notification(goal.get_tottal_amount(), goal.get_balance())
 
         if command == 'информация':
             print(f'''
                 название цели - {goal.name}
-                итоговая сумма - {goal.total_amount}
-                текущий баланс - {goal.balance}
+                итоговая сумма - {goal.get_tottal_amount()}
+                текущий баланс - {goal.get_balance()}
                 название категории - {goal.category}
                 статус - {goal.get_status()}
             ''')
+
+def goal_progress_notification(tottal_amount, balance):
+    percentages_list = [25, 50, 75]
+
+    current_percent = 0
+
+    for percent in percentages_list:
+        if ((balance * 100) / tottal_amount) >= percent:
+            current_percent = percent
+
+    print(f'баланс по цели составляет {'более' if ((balance * 100) / tottal_amount) > current_percent else ''} {current_percent}% от итоговой суммы')
 
 def print_tottal_progress():
     categoryes_folder_src = f'{os.getcwd()}/categoryes'
