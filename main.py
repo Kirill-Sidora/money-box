@@ -1,13 +1,16 @@
 import os
 import csv
+from datetime import datetime
+from datetime import date
 
 class Goal:
-    def __init__(self, name: str, tottal_amount: int, balance: int, category: str):
-        self.name = name
+    def __init__(self, name: str, tottal_amount: int, balance: int, category: str, deadline):
+        self.__name = name
         self.__tottal_amount = tottal_amount
         self.__balance = balance
-        self.category = category
+        self.__category = category
         self.__status = 'не выполнена'
+        self.__deadline = deadline
 
     def increase_balance(self, amount: int):
         try:
@@ -34,6 +37,15 @@ class Goal:
         result = (self.__balance * 100) / self.__tottal_amount
 
         return result
+
+    def get_name(self):
+        return self.__name
+
+    def get_category(self):
+        return self.__category
+
+    def get_deadline(self):
+        return self.__deadline
 
     def get_status(self):
         return self.__status
@@ -88,12 +100,61 @@ def create_goal():
 
             if not balance.isdigit():
                 raise ValueError('ошибка>баланс должен состоять только из цифр')
-            elif balance >= tottal_amount:
+            elif int(balance) >= int(tottal_amount):
                 raise ValueError('ошибка>баланс должен быть меньше итоговой суммы')
 
             break
         except ValueError as error:
             print(error)
+
+    current_date = datetime.now()
+    current_year = current_date.year
+
+    while True:
+        try:
+            year = input('дата завершения. год>')
+
+            if int(year) < int(current_year):
+                raise ValueError(f'ошибка>{year} уже прошёл')
+
+            break
+        except ValueError as error:
+            print(error)
+
+    current_month = current_date.month
+
+    while True:
+        months_list = ['январь', 'ферваль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентрябрь', 'октябрь', 'ноябрь', 'декабрь']
+
+        try:
+            month = input('дата завершения. месяц>')
+
+            if int(month) < 1 or int(month) > 12:
+                raise ValueError(f'ошибка>неопознанный номер месяца. в году всего 12 месяцев')
+
+            if int(year) == int(current_year) and int(month) < int(current_month):
+                raise ValueError(f'ошибка>{months_list[int(month)-1]} уже прошёл')
+
+            break
+        except ValueError as error:
+            print(error)
+
+    current_day = current_date.day
+
+    while True:
+        month_days_dict = {'1': 31, '2': 28, '3': 31, '4': 30, '5': 31, '6': 30, '7': 31, '8': 31, '9': 30, '10': 31, '11': 30, '12': 31}
+
+        try:
+            day = input('дата завершения. день>')
+
+            if int(day) < 0 or int(day) > month_days_dict.get(month):
+                raise ValueError(f'ошибка>введите номер дня от {current_day} до {month_days_dict.get(month)}')
+
+            break
+        except ValueError as error:
+            print(error)
+
+    deadline = date(int(year), int(month), int(day))
 
     current_directory = os.getcwd()
 
@@ -104,12 +165,12 @@ def create_goal():
 
     goal_src = f'{category_src}/{name}.csv'
 
-    goal = Goal(name, tottal_amount, balance, category)
+    goal = Goal(name, tottal_amount, balance, category, deadline)
 
     with open(goal_src, 'w', encoding='utf-8', newline='') as goal_file:
-        writer = csv.DictWriter(goal_file, ['name', 'tottal_amount', 'balance', 'category', 'status'])
+        writer = csv.DictWriter(goal_file, ['name', 'tottal_amount', 'balance', 'category', 'status', 'year', 'month', 'day'])
         writer.writeheader()
-        writer.writerow({'name': name, 'tottal_amount': tottal_amount, 'balance': balance, 'category': category, 'status': goal.get_status()})
+        writer.writerow({'name': name, 'tottal_amount': tottal_amount, 'balance': balance, 'category': category, 'status': goal.get_status(), 'year': year, 'month': month, 'day': day})
 
     return goal
 
@@ -183,15 +244,24 @@ def find_goal():
     with open(goal_file_src, 'r', encoding='utf-8') as goal_file:
         reader = csv.DictReader(goal_file)
 
+        current_date = date.today()
+
         for row in reader:
-            goal = Goal(row.get('name'), int(row.get('tottal_amount')), int(row.get('balance')), row.get('category'))
+            goal = Goal(row.get('name'), int(row.get('tottal_amount')), int(row.get('balance')), row.get('category'), row.get('deadline'))
+
+            if current_date > date(int(row.get('year')), int(row.get('month')), int(row.get('day'))):
+                with open(goal_file_src, 'w', encoding='utf-8', newline='') as goal_file:
+                    writer = csv.DictWriter(goal_file, ['name', 'tottal_amount', 'balance', 'category', 'status', 'deadline'])
+
+                    writer.writeheader
+                    writer.writerow({'name': goal.get_name(), 'tottal_amount': goal.get_tottal_amount(), 'balance': goal.get_balance(), 'category': goal.get_category(), 'status': 'просрочена', 'deadline': goal.get_deadline()})
 
     command_list = ['увеличить баланс', 'уменьшить баланс', 'информация', 'выход']
 
     while True:
         while True:
             try:
-                command = input(f'Текущая цель: {goal.name}, команда>')
+                command = input(f'Текущая цель: {goal.get_name()}, команда>')
 
                 if not command in command_list:
                     raise ValueError(f'ошибка>{command}\nсообщение>для просмотра всех допустимых комманд введите "помощь"')
@@ -234,7 +304,7 @@ def find_goal():
                     row.update({'balance': goal.get_balance()})
 
                 with open(goal_file_src, 'w', encoding='utf-8', newline='') as goal_file:
-                    writer = csv.DictWriter(goal_file, ['name', 'tottal_amount', 'balance', 'category', 'status'])
+                    writer = csv.DictWriter(goal_file, ['name', 'tottal_amount', 'balance', 'category', 'status', 'deadline'])
                     writer.writeheader()
                     writer.writerow(row)
 
