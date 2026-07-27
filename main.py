@@ -1,7 +1,9 @@
 import os
 import csv
+import math
 from datetime import datetime
 from datetime import date
+from datetime import timedelta
 
 class Goal:
     def __init__(self, name: str, tottal_amount: int, balance: int, category: str, deadline):
@@ -304,11 +306,31 @@ def find_goal():
                     row.update({'balance': goal.get_balance()})
 
                 with open(goal_file_src, 'w', encoding='utf-8', newline='') as goal_file:
-                    writer = csv.DictWriter(goal_file, ['name', 'tottal_amount', 'balance', 'category', 'status', 'deadline'])
+                    writer = csv.DictWriter(goal_file, ['name', 'tottal_amount', 'balance', 'category', 'status', 'year', 'month', 'day'])
                     writer.writeheader()
                     writer.writerow(row)
 
             goal_progress_notification(goal.get_tottal_amount(), goal.get_balance())
+
+            current_tottal_amount = int(goal.get_tottal_amount())
+            start = date.today()
+            end = date(int(row.get('year')), int(row.get('month')), int(row.get('day')))
+            difference = end - start
+
+            print(f'Если вы каждый день будете увеличивать баланс цели на {amount}, то вы справитесь достигните цель к {start + timedelta(math.ceil(current_tottal_amount / int(amount)))}')
+            print(f'Текущая дата окончания цели>{end}')
+            answer = input(f'Поменять дату окончания цели на {start + timedelta(math.ceil(current_tottal_amount / int(amount)))}>')
+
+            if answer == 'да':
+                year = (start + timedelta(math.ceil(current_tottal_amount / int(amount)))).year
+                month = (start + timedelta(math.ceil(current_tottal_amount / int(amount)))).month
+                day = (start + timedelta(math.ceil(current_tottal_amount / int(amount)))).day
+
+                with open(goal_file_src, 'w', encoding='utf-8', newline='') as goal_file:
+                    writer = csv.DictWriter(goal_file, ['name', 'tottal_amount', 'balance', 'category', 'status', 'year', 'month', 'day'])
+                    writer.writeheader()
+                    row.update({'year':year, 'month': month, 'day': day})
+                    writer.writerow(row)
 
         if command == 'уменьшить баланс':
             current_balance = goal.get_balance()
